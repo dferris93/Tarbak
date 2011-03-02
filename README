@@ -71,8 +71,8 @@ INCBACKUPFILE=/tmp/incbackupfile
 #full backup
 0 1 * * Sun /usr/local/sbin/tarbak full
 
-#differential backup
+#differential backup - back up everything since the last full backup
 0 1 * * Mon-Sat /usr/local/sbin/tarbak diff
 
-#incremental backup
+#incremental backup - back up everything since the last incremental backup
 0 1 * * Mon-Sat /usr/local/sbin/tarbak inc
