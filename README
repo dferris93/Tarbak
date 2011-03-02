@@ -1,0 +1,78 @@
+Tarbak is a very simple shell script designed to back up a few hosts to a central backup server.  If you have to back up more than 5 or 6 hosts, you probably don't want to use tarbak. 
+
+I wrote this script to back up my VPS server to a backup server that I had no physical control over and had users with root access.  Tarbak will allow you to back up your data in such a way that nobody can read it, you don't need root access, and it doesn't have to be able to log into your host.
+
+You will need a backup server with the following:
+
+1.  Enough disk space for the backups, tarbak doesn't overwrite full backups.  If your space is limited, you will need a way to rotate them (a very simple shell script will suffice).
+
+2.  Your ssh key in your authorized keys file. 
+
+3.  You don't need root on the backup server.
+
+To set up tarbak:
+
+1.  Set up your gpg encryption keys.  You can read how to do this on the gnupg web site: http://www.gnupg.org/
+
+2.  Generate an ssh key pair.  Put the ssh public key into your authorized keys file on the backup server
+
+3.  Use your editor and edit the tarbak script.  You must set the following variables to suit your system:
+
+#Passed to tar as command line arguments. 
+EXCLUDE='--exclude="cdrom*/*" --exclude="dev/*" --exclude="media/*" --exclude="mnt/*" --exclude="proc/*" --exclude="sys/*" --exclude="usr/ports/*" --exclude="usr/src/*" --exclude="var/tmp/*"'
+
+#location of tar binary
+TAR=/usr/bin/tar
+
+#location of date binary
+DATE=/bin/date
+
+#location of gpg binary
+GPG=/usr/local/bin/gpg
+
+#gpg public key you want to use for encryption
+GPGKEY=ACE0D7E9
+
+#gpg cipher
+CIPHER=AES256
+
+#gpg digest algorithm
+DIGEST=SHA512
+
+#gpg compression algorithm
+COMPRESS=BZIP2
+
+#other options to pass to gpg
+GPGOPTS="--no-secmem-warning"
+
+#location of ssh binary
+SSH=/usr/bin/ssh
+
+#ssh key to use
+SSHKEY=~/.ssh/id_rsa
+
+#On what host do you want to store your backup
+SSHHOST=backuphost.example.com
+
+#What username are you going to use on the remote system
+SSHUSER=mysshuser
+
+#what directory should have your backups
+BACKUPDIR=/backup/dest/dir
+
+#this file is touched every time you run a full backup.  It is used to date the backup
+FULLBACKUPFILE=/tmp/lastfullbackup
+
+#this file is touched whenever a full or incremental backup is run. 
+INCBACKUPFILE=/tmp/incbackupfile
+
+4.  Add Tarbak to cron like this:
+
+#full backup
+0 1 * * Sun /usr/local/sbin/tarbak full
+
+#differential backup
+0 1 * * Mon-Sat /usr/local/sbin/tarbak diff
+
+#incremental backup
+0 1 * * Mon-Sat /usr/local/sbin/tarbak diff

@@ -1,0 +1,56 @@
+#!/bin/sh
+
+EXCLUDE='--exclude="cdrom*/*" --exclude="dev/*" --exclude="media/*" --exclude="mnt/*" --exclude="proc/*" --exclude="sys/*" --exclude="usr/ports/*" --exclude="usr/src/*" --exclude="var/tmp/*"'
+TAR=/usr/bin/tar
+DATE=/bin/date
+GPG=/usr/local/bin/gpg
+GPGKEY=FFFFFFF
+CIPHER=AES256
+DIGEST=SHA512
+COMPRESS=BZIP2
+GPGOPTS="--no-secmem-warning"
+SSH=/usr/bin/ssh
+SSHKEY=~/.ssh/id_rsa
+SSHHOST=backup.example.org
+SSHUSER=remote_tarbak_user
+BACKUPDIR=/remote/takbak/directory
+FULLBACKUPFILE=/tmp/lastfullbackup
+INCBACKUPFILE=/tmp/incbackupfile
+
+if [ "$1" = 'full' ]
+then
+	MDY=`$DATE +'%m%d%y'`
+
+	$TAR -cpf - -C / $EXCLUDE / | $GPG $GPGOPTS -r $GPGKEY --cipher-algo $CIPHER --digest-algo $DIGEST --compress-algo $COMPRESS -e | $SSH -i $SSHKEY $SSHUSER@$SSHHOST "cat > $BACKUPDIR/backup.full.$MDY.tar.gpg" > /dev/null 2>&1
+
+	if [ "$?" = "0" ]
+	then
+		touch $FULLBACKUPFILE
+		touch $INCBACKUPFILE
+	fi
+
+fi
+
+if [ "$1" = 'diff' ]
+then
+	DAY=`$DATE '+%a'`
+	if [ -f "$FULLBACKUPFILE" ]
+	then
+		find / -type f -newer $FULLBACKUPFILE -print | $TAR -cpf - -T - -C / $EXCLUDE | $GPG $GPTOPTS -r $GPGKEY --cipher-algo $CIPHER  --digest-algo $DIGEST --compress-algo $COMPRESS -e | $SSH -i $SSHKEY $SSHUSER@$SSHHOST "cat > $BACKUPDIR/backup.diff.$DAY.tar.gpg" > /dev/null 2>&1
+	fi
+
+fi
+
+if [ "$1" = 'inc' ]
+then
+	DAY=`$DATE '+%a'`
+	if [ -f "$INCBACKUPFILE" ]
+	then
+		find / -type f -newer $INCBACKUPFILE -print | $TAR -cpf - -T - -C / $EXCLUDE | $GPG $GPGOPTS -r $GPGKEY --cipher-algo $CIPHER --digest-algo $DIGEST --compress-algo $COMPRESS -e | ssh -i $SSHKEY $SSHUSER@$SSHHOST " cat > $BACKUPDIR/backup.inc.$DAY.tar.gpg" > /dev/null 2>&1
+
+		if [ "$?" = "0" ]
+		then
+			touch $INCBACKUPFILE
+		fi
+	fi
+fi
