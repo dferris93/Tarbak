@@ -75,4 +75,4 @@ INCBACKUPFILE=/tmp/incbackupfile
 0 1 * * Mon-Sat /usr/local/sbin/tarbak diff
 
 #incremental backup
-0 1 * * Mon-Sat /usr/local/sbin/tarbak diff
+0 1 * * Mon-Sat /usr/local/sbin/tarbak inc
